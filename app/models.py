@@ -1,8 +1,12 @@
+from flask import current_app
+from datetime import datetime, timedelta
 from . import db
-from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
-class User(db.Model):
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False) 
     firstname = db.Column(db.String(120), nullable=False)
@@ -11,7 +15,7 @@ class User(db.Model):
     phone = db.Column(db.String(120), unique=True, nullable=False)
     country = db.Column(db.String(120), nullable=False)
     password = db.Column(db.String(128), nullable=False)
-    
+  
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -25,6 +29,23 @@ class User(db.Model):
     
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
+    
+    def generate_confirmation_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.id}).decode('utf-8')
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        db.session.commit()
+        return True
 
 class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)

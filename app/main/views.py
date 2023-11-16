@@ -11,11 +11,19 @@ from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt()
 
-
-#from flask_login import login_user, logout_user, login_required
-
 @main.route('/', methods=['GET', 'POST'])
 def index():
+    current_app.logger.info('Sovellus avattu pääsivulle.')
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.home'))
+    return redirect(url_for('main.login'))
+
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.home'))
+    current_app.logger.info('Login-sivu avattu.')
     form = LoginForm()
     if form.validate_on_submit():
         form.email.data = form.email.data.strip()
@@ -42,19 +50,20 @@ def index():
             
             login_user(user, form.remember_me.data)
             if user.role == 16:
-                return redirect(url_for('admin.index'))
+                return redirect(url_for('auth.admin'))
             elif user.role == 8:
-                return redirect(url_for('moderator.index'))
+                return redirect(url_for('auth.moderator'))
             else:
-                return redirect(url_for('user.index'))
+                return redirect(url_for('auth.home'))
 
         return redirect(url_for('main.login'))
    
-    return render_template('/auth/login.html', form=form)
+    return render_template('auth/login.html', form=form)
 
 
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
+    current_app.logger.info('Rekisteröitymissivu avattu.')
     form = RegistrationForm()
     if form.validate_on_submit():
         if User.query.filter_by(email=form.email.data).first():

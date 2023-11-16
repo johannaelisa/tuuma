@@ -23,14 +23,15 @@ class RegistrationForm(FlaskForm):
                'Kirjoita oikea sukunimi')])
     phone = StringField('Puhelinnumero', validators=[
         DataRequired(), Length(1, 64),
-        Regexp('^[0-9-\'\\s]*$', 0,
+        Regexp(r'^(\+\d{1,3})?\d{9,15}$', 0,
                'Kirjoita oikea puhelinnumero')])
     country = StringField('Maa', validators=[
         DataRequired(), Length(1, 64),
         Regexp('^[A-Za-z-\'\\s]*$', 0,
                'Kirjoita oikea maa')])
-    email = StringField('Email', validators=[DataRequired(), Length(1, 64),
-                                             Email()])             
+    email = StringField('Email', validators=[
+        DataRequired(), Length(1, 64),
+        Email()])             
     
     password = PasswordField('Salasana', validators=[
         DataRequired(), EqualTo('password2', message='Salasanojen tulee täsmätä.')])
