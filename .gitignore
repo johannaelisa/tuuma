@@ -1,2 +1,16 @@
 venv/
 config.py
+
+*.sqlite
+data-dev.sqlite
+
+/migrations
+*.db
+*.db-shm
+*.db-wal
+*.pyc
+*.pyo
+__pycache__/
+instance/
+
+alembic.ini

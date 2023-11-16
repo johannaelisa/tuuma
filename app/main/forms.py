@@ -23,7 +23,7 @@ class RegistrationForm(FlaskForm):
                'Kirjoita oikea sukunimi')])
     phone = StringField('Puhelinnumero', validators=[
         DataRequired(), Length(1, 64),
-        Regexp('^[0-9-\'\s]*$', 0,
+        Regexp('^[0-9-\'\\s]*$', 0,
                'Kirjoita oikea puhelinnumero')])
     country = StringField('Maa', validators=[
         DataRequired(), Length(1, 64),
