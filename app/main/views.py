@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 from flask import render_template, session, redirect, url_for, current_app, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from . import main
-from .forms import LoginForm, RegistrationForm
+from .forms import LoginForm, RegistrationForm, ConfirmEmailForm
 from .. import db
-from ..models import User
+from ..models import User, SignupToken
 from ..email import send_email
 import secrets
 from flask_bcrypt import Bcrypt
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 bcrypt = Bcrypt()
 
@@ -31,7 +32,7 @@ def login():
         
         user = User.query.filter_by(email=form.email.data).first()
         
-        if user.verify_password(form.password.data):
+        if user.check_password(form.password.data):
             session['username'] = user.username
             current_app.config['SESSION_COOKIE_SECURE'] = False
             current_app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -89,19 +90,48 @@ def signup():
                     is_active=False,
                     role=1,
                     member_since=datetime.utcnow())
-        
         db.session.add(user)
         db.session.commit()
 
         token = user.generate_confirmation_token()
-        send_email(user.email, 'Vahvista tilisi',
-                     'auth/email/confirm', user=user, token=token)
+        signup_token = SignupToken(user_id=user.id, token=token)
+        db.session.add(signup_token)
+        db.session.commit()
+        
+        encoded_token = urlsafe_b64encode(token).decode('utf-8')
+        confirmation_link = url_for('main.confirm_email', token=encoded_token, _external=True)
+        current_app.logger.info('Vahvistuslinkki: ' + confirmation_link)
+        send_email(user.email, 'Vahvista tilisi', 'email/confirm', user=user, confirmation_link=confirmation_link)
         flash('Olet nyt rekisteröitynyt käyttäjä.')
         flash('Vahvistusviesti on lähetetty sähköpostiisi.')
         
-        return redirect(url_for('main.thankyou'))
+        #return redirect(url_for('main.thankyou'))
    
     return render_template('/auth/signup.html', form=form)
 
+from flask import render_template, redirect, url_for, flash
+
+
+@main.route('/confirm_email/<token>', methods=['GET', 'POST'])
+def confirm_email(token):
+    current_app.logger.info('Sähköpostin vahvistussivu on avattu.')
+    form = ConfirmEmailForm()
+    decoded_token = urlsafe_b64decode(token).decode('utf-8')
     
+    if form.validate_on_submit():
+        email = form.email.data.strip()
+        signup_token = SignupToken.query.filter_by(token=decoded_token).first()
+        
+        if signup_token:
+            user = signup_token.user
+            user.confirmed = True
+            user.is_active = True
+            db.session.commit()
+            flash('Sähköposti vahvistettu onnistuneesti!')
+            return redirect(url_for('main.index'))
+    
+    flash('Sähköpostin vahvistus epäonnistui. Tarkista linkki ja yritä uudelleen.')
+    return render_template('confirm_email.html', form=form)
+
+
 

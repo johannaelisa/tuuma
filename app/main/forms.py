@@ -43,4 +43,11 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, field):
         if User.query.filter_by(email=field.data).first():
             raise ValidationError('Sähköposti on jo käytössä.')
-            
+
+class ConfirmEmailForm(FlaskForm):
+    email = StringField('Sähköposti', validators=[DataRequired()])
+    submit = SubmitField('Lähetä vahvistusviesti uudelleen')
+    
+    def validate_email(self, field):
+        if not User.query.filter_by(email=field.data).first():
+            raise ValidationError('Sähköposti ei ole käytössä.')
