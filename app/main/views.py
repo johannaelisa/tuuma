@@ -3,62 +3,51 @@ from flask import render_template, session, redirect, url_for, current_app, flas
 from flask_login import login_user, logout_user, login_required, current_user
 from . import main
 from .forms import LoginForm, RegistrationForm, ConfirmEmailForm
-from .. import db
-from ..models import User, SignupToken
+from .. import db, bcrypt
+from ..models import Users, SignupTokens
 from ..email import send_email
 import secrets
-from flask_bcrypt import Bcrypt
-from base64 import urlsafe_b64encode, urlsafe_b64decode
+from base64 import urlsafe_b64decode, urlsafe_b64encode
+from ..utils import confirmation_token, remember_me_token, check_user_and_redirect, check_is_active
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
-bcrypt = Bcrypt()
 
-@main.route('/', methods=['GET', 'POST'])
+@main.route('/', methods=['GET'])
+def root():
+    return redirect(url_for('index'))
+
+
+@main.route('/index', methods=['GET'])
 def index():
     current_app.logger.info('Sovellus avattu pääsivulle.')
     if current_user.is_authenticated:
-        return redirect(url_for('auth.home'))
-    return redirect(url_for('main.login'))
-
+        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
+        check_user_and_redirect(current_user)
+    return render_template('index.html')
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('auth.home'))
     current_app.logger.info('Login-sivu avattu.')
     form = LoginForm()
+    if current_user.is_authenticated:
+        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
+        check_user_and_redirect(current_user)
+    
     if form.validate_on_submit():
         form.email.data = form.email.data.strip()
         form.password.data = form.password.data.strip()
+        form.remember_me.data = form.remember_me.data
         
-        user = User.query.filter_by(email=form.email.data).first()
+        user = Users.query.filter_by(email=form.email.data).first()
         
-        if user.check_password(form.password.data):
-            session['username'] = user.username
-            current_app.config['SESSION_COOKIE_SECURE'] = False
-            current_app.config['SESSION_COOKIE_HTTPONLY'] = True
-    
+        if user and user.check_password(form.password.data) and check_is_active(user):
             if form.remember_me.data:
-                remember_token = secrets.token_urlsafe(32)
-                user.remember_token = remember_token
-                current_app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=365).total_seconds()
-                expiration = datetime.utcnow() + timedelta(seconds=current_app.config['REMEMBER_COOKIE_DURATION'])
-                                
-                db.session.commit()
-                session['remember_token'] = remember_token
-            else:
-                session['remember_token'] = None
-                
-            
-            login_user(user, form.remember_me.data)
-            if user.role == 16:
-                return redirect(url_for('auth.admin'))
-            elif user.role == 8:
-                return redirect(url_for('auth.moderator'))
-            else:
-                return redirect(url_for('auth.home'))
-
-        return redirect(url_for('main.login'))
-   
+                remember_me = remember_me_token(user, db)            
+            login_user(user, remember=remember_me, duration=None, force=False, fresh=True)
+            url_for('auth.home')
+        else:
+            flash('Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.')
+            return redirect(url_for('main.login'))
     return render_template('auth/login.html', form=form)
 
 
@@ -67,9 +56,9 @@ def signup():
     current_app.logger.info('Rekisteröitymissivu avattu.')
     form = RegistrationForm()
     if form.validate_on_submit():
-        if User.query.filter_by(email=form.email.data).first():
+        if Users.query.filter_by(email=form.email.data).first():
             flash('Sähköposti on jo käytössä.')
-            return redirect(url_for('main.signup'))
+            return redirect(url_for('signup'))
         
         generated_username = 'user_' + secrets.token_urlsafe(8)
         form.firstname.data = form.firstname.data.strip()
@@ -79,7 +68,7 @@ def signup():
         form.email.data = form.email.data.strip()
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         
-        user = User( username=generated_username,
+        user = Users(username=generated_username,
                     firstname=form.firstname.data,
                     lastname=form.lastname.data,
                     email=form.email.data,
@@ -92,46 +81,50 @@ def signup():
                     member_since=datetime.utcnow())
         db.session.add(user)
         db.session.commit()
+        confirmation_token(user, db)
 
-        token = user.generate_confirmation_token()
-        signup_token = SignupToken(user_id=user.id, token=token)
-        db.session.add(signup_token)
-        db.session.commit()
-        
-        encoded_token = urlsafe_b64encode(token).decode('utf-8')
-        confirmation_link = url_for('main.confirm_email', token=encoded_token, _external=True)
-        current_app.logger.info('Vahvistuslinkki: ' + confirmation_link)
-        send_email(user.email, 'Vahvista tilisi', 'email/confirm', user=user, confirmation_link=confirmation_link)
-        flash('Olet nyt rekisteröitynyt käyttäjä.')
-        flash('Vahvistusviesti on lähetetty sähköpostiisi.')
-        
-        #return redirect(url_for('main.thankyou'))
-   
+        return render_template('/auth/signup.html', form=form)
     return render_template('/auth/signup.html', form=form)
-
-from flask import render_template, redirect, url_for, flash
-
 
 @main.route('/confirm_email/<token>', methods=['GET', 'POST'])
 def confirm_email(token):
     current_app.logger.info('Sähköpostin vahvistussivu on avattu.')
-    form = ConfirmEmailForm()
-    decoded_token = urlsafe_b64decode(token).decode('utf-8')
-    
-    if form.validate_on_submit():
-        email = form.email.data.strip()
-        signup_token = SignupToken.query.filter_by(token=decoded_token).first()
+    form = ConfirmEmailForm() 
+    if request.method == 'GET':
+        form.token.data = token
+    try:
+        decoded_token = urlsafe_b64decode(token)
+    except Exception as e:
+        current_app.logger.error(f"Virhe tokenin purkamisessa: {e}")
+        return redirect(url_for('index'))
+
+    signup_token = SignupTokens.query.filter_by(token=decoded_token).first()
+    email = signup_token.email if signup_token else None
+    user = Users.query.filter_by(email=email).first() if signup_token else None
+  
+    if signup_token is None or signup_token.expiration_time < datetime.utcnow():
+        current_app.logger.error('Token on vanhentunut.')
         
         if signup_token:
-            user = signup_token.user
-            user.confirmed = True
-            user.is_active = True
+            db.session.delete(signup_token)
             db.session.commit()
-            flash('Sähköposti vahvistettu onnistuneesti!')
-            return redirect(url_for('main.index'))
-    
-    flash('Sähköpostin vahvistus epäonnistui. Tarkista linkki ja yritä uudelleen.')
-    return render_template('confirm_email.html', form=form)
+
+        if user:
+            confirmation_token(user, db)
+
+        return redirect(url_for('index'))
+
+    else:
+        current_app.logger.info('Token on voimassa.')
+        
+        user.confirmed = True
+        user.is_active = True
+        db.session.add(user)
+        db.session.commit()
+        flash('Tilisi on nyt vahvistettu.')
+        return redirect(url_for('main.login'))
 
 
-
+@main.route('/home', methods=['GET', 'POST'])
+def home():
+    return render_template('auth/home.html')

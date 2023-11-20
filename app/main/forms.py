@@ -1,8 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, BooleanField, SubmitField 
+from wtforms import PasswordField, StringField, BooleanField, SubmitField, HiddenField, ValidationError
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
-from wtforms import ValidationError
-from ..models import User
+from ..models import Users
 
 
 class LoginForm(FlaskForm):
@@ -41,13 +40,14 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Rekisteröidy')
     
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first():
+        if Users.query.filter_by(email=field.data).first():
             raise ValidationError('Sähköposti on jo käytössä.')
 
 class ConfirmEmailForm(FlaskForm):
     email = StringField('Sähköposti', validators=[DataRequired()])
-    submit = SubmitField('Lähetä vahvistusviesti uudelleen')
+    token = HiddenField('token') 
+    submit = SubmitField('Vahvista sähköposti')
     
     def validate_email(self, field):
-        if not User.query.filter_by(email=field.data).first():
+        if not Users.query.filter_by(email=field.data).first():
             raise ValidationError('Sähköposti ei ole käytössä.')
