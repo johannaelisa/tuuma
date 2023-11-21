@@ -42,7 +42,13 @@ def create_app(config_name):
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
     
+    from .auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint)
+    
     log_file = 'sovellusloki.log'
     logging.basicConfig(filename=log_file, level=logging.INFO)
 
     return app
+
+from .main import views
+from .auth import views

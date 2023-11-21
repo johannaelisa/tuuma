@@ -4,6 +4,7 @@ from .email import send_email
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from .models import Users, SignupTokens, RememberMeTokens
 from flask_login import login_user
+from . import db
 
 def confirmation_token(user, db):
     token = None
@@ -65,17 +66,19 @@ def get_token_expiration_time(decoded_token):
     expiration_time = datetime.strptime(expiration_time_str, '%Y-%m-%dT%H:%M:%S.%fZ')
     return expiration_time + timedelta(days=1)
 
-
 def check_user_and_redirect(current_user):    
     if current_user.is_authenticated:
-        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
+        current_app.logger.info('Suoritetaan check_user_and_redirect-funktiota.')
         if check_is_active(current_user):
-            return redirect(url_for('auth.home'))
+            current_app.logger.info('Käyttäjä on aktiivinen ehto totautui.')
+            return redirect(url_for('auth.home', _external=True))
+
+
         else:
             flash('Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.')
             return redirect(url_for('main.login'))
         
-    
+        
 def check_is_active(user):
     if user.is_active:
         current_app.logger.info('Käyttäjä on aktiivinen.')
@@ -84,4 +87,3 @@ def check_is_active(user):
         current_app.logger.info('Käyttäjä ei ole aktiivinen.')
         flash('Käyttäjätilisi ei ole aktiivinen.')
         return False
-    
