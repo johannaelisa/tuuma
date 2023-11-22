@@ -122,7 +122,8 @@ def confirmnewpassword(token):
     else:
         current_app.logger.info('Token on voimassa.')
         if form.validate_on_submit():
-            user.set_password(form.password.data)
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            user.password = hashed_password
             db.session.add(user)
             db.session.commit()
             flash('Salasanasi on vaihdettu.')
