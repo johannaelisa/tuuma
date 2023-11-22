@@ -2,18 +2,46 @@ from datetime import datetime, timedelta, timezone
 from flask import current_app, redirect, url_for, flash, render_template
 from .email import send_email
 from base64 import urlsafe_b64decode, urlsafe_b64encode
-from .models import Users, SignupTokens, RememberMeTokens
+from .models import Users, SignupTokens, RememberMeTokens, PasswordResetTokens
 from flask_login import login_user
 from . import db
 
-def confirmation_token(user, db):
-    token = None
+def new_password_token(user, db):
+    token = user.generate_confirmation_token()
+    expiration_time_default = datetime.utcnow() + timedelta(days=30)
     try:
-        token = user.generate_confirmation_token()
-        expiration_time = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(days=1))
-        signup_token = SignupTokens(email=user.email,
-                                token=token,
-                                expiration_time=expiration_time.replace(tzinfo=timezone.utc))
+        password_reset_token = PasswordResetTokens(
+            user_id=user.id,
+            token=token,
+            expiration_time=expiration_time_default.replace(tzinfo=timezone.utc),
+        )
+        current_app.logger.info('Token: ' + token.decode('utf-8'))
+        current_app.logger.info('Password reset token: ' + str(password_reset_token))
+        db.session.add(password_reset_token)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Virhe tokenin generoinnissa: {e}")
+        db.session.rollback()
+        flash('Salasanan vaihdossa tapahtui virhe. Yritä uudelleen.')
+    
+    if token is not None:
+        encoded_token = urlsafe_b64encode(token).decode('utf-8')
+        current_app.logger.info('Encoded token: ' + encoded_token)
+        password_reset_link = url_for('main.confirmnewpassword', token=encoded_token, _external=True)
+        current_app.logger.info('Salasanan vaihtolinkki: ' + password_reset_link)
+        send_email(user.email, 'Salasanan vaihto', 'email/password_reset', user=user, password_reset_link=password_reset_link)
+        flash('Salasanan vaihtolinkki on lähetetty sähköpostiisi.')
+        return True
+
+def confirmation_token(user, db):
+    token = user.generate_confirmation_token()
+    expiration_time_default = datetime.utcnow() + timedelta(days=30)
+    try:
+        signup_token = SignupTokens(
+            email=user.email,
+            token=token,
+            expiration_time=expiration_time_default.replace(tzinfo=timezone.utc),
+        )
         current_app.logger.info('Token: ' + token.decode('utf-8'))
         current_app.logger.info('Signup token: ' + str(signup_token))
         db.session.add(signup_token)
@@ -33,12 +61,11 @@ def confirmation_token(user, db):
         flash('Vahvistusviesti on lähetetty sähköpostiisi.')
 
 def remember_me_token(user, db):
-    token = None
+    token = user.generate_confirmation_token()
+    expiration_time_default = datetime.utcnow() + timedelta(days=30)
     try:
-        token = user.generate_remember_me_token()
-        expiration_time = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(days=30))
         remember_me_token = RememberMeTokens(token=token,
-                                expiration_time=expiration_time.replace(tzinfo=timezone.utc),
+                                expiration_time=expiration_time_default.replace(tzinfo=timezone.utc),
                                 user_id=user.id)
         current_app.logger.info('Token: ' + token.decode('utf-8'))
         current_app.logger.info('Remember me token: ' + str(remember_me_token))
@@ -72,8 +99,6 @@ def check_user_and_redirect(current_user):
         if check_is_active(current_user):
             current_app.logger.info('Käyttäjä on aktiivinen ehto totautui.')
             return redirect(url_for('auth.home', _external=True))
-
-
         else:
             flash('Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.')
             return redirect(url_for('main.login'))

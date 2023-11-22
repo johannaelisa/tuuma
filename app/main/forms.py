@@ -10,6 +10,15 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Muista minut')
     submit = SubmitField('Kirjaudu')
 
+class PasswordResetForm(FlaskForm):
+    email = StringField('Sähköposti', validators=[DataRequired()])
+    submit = SubmitField('Lähetä salasanan vaihtolinkki')
+
+class PasswordResetForm2(FlaskForm):
+    password = PasswordField('Uusi salasana', validators=[DataRequired()])
+    confirm_password = PasswordField('Vahvista salasana', validators=[DataRequired(), EqualTo('password')])
+    token = HiddenField('Token', validators=[DataRequired()])
+    submit = SubmitField('Vaihda salasana')
 
 class RegistrationForm(FlaskForm):
     firstname = StringField('Etunimi', validators=[

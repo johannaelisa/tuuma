@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 from flask import render_template, session, redirect, url_for, current_app, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from . import main
-from .forms import LoginForm, RegistrationForm, ConfirmEmailForm
+from .forms import LoginForm, RegistrationForm, ConfirmEmailForm, PasswordResetForm, PasswordResetForm2
 from .. import db, bcrypt
-from ..models import Users, SignupTokens, RememberMeTokens
+from ..models import Users, SignupTokens, RememberMeTokens, PasswordResetTokens
 from ..email import send_email
 import secrets
 from base64 import urlsafe_b64decode, urlsafe_b64encode
-from ..utils import confirmation_token, remember_me_token, check_user_and_redirect, check_is_active
+from ..utils import confirmation_token, remember_me_token, check_user_and_redirect, check_is_active, new_password_token
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from ..main import main
 
@@ -37,16 +37,20 @@ def login():
         return check_user_and_redirect(current_user)
     
     if form.validate_on_submit():
+        current_app.logger.info('Tarkistetaan lomakkeen tiedot')
         form.email.data = form.email.data.strip()
         form.password.data = form.password.data.strip()
         form.remember_me.data = form.remember_me.data
         
         user = Users.query.filter_by(email=form.email.data).first()
-        remember_me = False 
+        remember_me = False
         
         if user and user.check_password(form.password.data) and check_is_active(user):
             if form.remember_me.data:
-                remember_me = remember_me_token(user, db)            
+                current_app.logger.info('Remember me -valinta on päällä.')
+                remember_me = remember_me_token(user, db)
+                current_app.logger.info('Remember me -token luotu.')
+                current_app.logger.info('Remember me -token: ' + str(remember_me))       
             login_user(user, remember=remember_me, duration=None, force=False, fresh=True)
             current_app.logger.info('Käyttäjä on kirjautunut sisään.')
             return redirect(url_for('auth.home'))
@@ -67,6 +71,64 @@ def logout():
         current_app.logger.info('Remember me -token poistettu.')
     return redirect(url_for('main.index'))
 
+@main.route('/newpassword', methods=['GET', 'POST'])
+def newpassword():
+    current_app.logger.info('Uuden salasanan vaihtosivu avattu.')
+    form = PasswordResetForm()
+    if current_user.is_authenticated:
+        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
+        return check_user_and_redirect(current_user)
+    if form.validate_on_submit():
+        user = Users.query.filter_by(email=form.email.data).first()
+        if user:
+            current_app.logger.info('Käyttäjä löytyi.')
+            #Tähän tulee lisätä tarkistus, että onko käyttäjä aktiivinen
+            new_password_token(user, db)            
+            flash('Salasanan vaihtolinkki lähetetty sähköpostiisi.')
+            return redirect(url_for('main.index'))
+        else:
+            flash('Sähköpostia ei löytynyt.')
+            return redirect(url_for('main.newpassword'))
+    return render_template('main/newpassword.html', form=form)
+
+@main.route('/confirmnewpassword/<token>', methods=['GET', 'POST'])
+def confirmnewpassword(token):
+    current_app.logger.info('Salasanan vaihtosivu avattu.')
+    form = PasswordResetForm2()
+    if request.method == 'GET':
+        form.token.data = token
+    try:
+        decoded_token = urlsafe_b64decode(token)
+    except Exception as e:
+        current_app.logger.error(f"Virhe tokenin purkamisessa: {e}")
+        return redirect(url_for('index'))
+    
+    
+    new_password_token = PasswordResetTokens.query.filter_by(token=decoded_token).first()
+    user = Users.query.filter_by(id=new_password_token.user_id).first() if new_password_token else None
+    
+    if new_password_token is None or new_password_token.expiration_time < datetime.utcnow():
+        current_app.logger.error('Token on vanhentunut.')
+        
+        if new_password_token:
+            db.session.delete(new_password_token)
+            db.session.commit()
+
+        if user:
+            new_password_token(user, db)
+
+        return redirect(url_for('index'))
+    
+    else:
+        current_app.logger.info('Token on voimassa.')
+        if form.validate_on_submit():
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash('Salasanasi on vaihdettu.')
+            return redirect(url_for('main.login'))
+        return render_template('main/confirmnewpassword.html', form=form)
+    
 
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -103,8 +165,13 @@ def signup():
         db.session.commit()
         confirmation_token(user, db)
 
-        return render_template('/main/signup.html', form=form)
+        return redirect(url_for('main.thankyou'))
     return render_template('/auth/signup.html', form=form)
+
+@main.route('/thankyou', methods=['GET'])
+def thankyou():
+    current_app.logger.info('Kiitos-sivu avattu.')
+    return render_template('main/thankyou.html')
 
 @main.route('/confirm_email/<token>', methods=['GET', 'POST'])
 def confirm_email(token):
