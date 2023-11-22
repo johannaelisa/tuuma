@@ -82,7 +82,12 @@ def newpassword():
         user = Users.query.filter_by(email=form.email.data).first()
         if user:
             current_app.logger.info('Käyttäjä löytyi.')
-            #Tähän tulee lisätä tarkistus, että onko käyttäjä aktiivinen
+            #Tarkistetaan, onko käyttäjätili vahvistettu rekisteröitymisen jälkeen
+            if not user.confirmed:
+                current_app.logger.info('Käyttäjätiliä ei ole vahvistettu.')
+                flash('Käyttäjätiliä ei ole vahvistettu. Tarkista sähköpostisi.')
+                confirmation_token(user, db)
+                return render_template('main/newpassword.html', form=form)
             new_password_token(user, db)            
             flash('Salasanan vaihtolinkki lähetetty sähköpostiisi.')
             return redirect(url_for('main.index'))
