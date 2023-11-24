@@ -1,28 +1,44 @@
-{% extends "bootstrap/base.html" %}
-{% block title %}Tuuma{% endblock %}
-{% block navbar %}
-<div class="navbar navbar-inverse" role="navigation">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle"
-             data-toggle="collapse" data-target=".navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="index">Tuuma</a>
-        </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav navbar-righ">
-                <li><a href="login">Kirjaudu</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    {% block head %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block title %}Tuuma{% endblock %}
+    
+    <link href="{{ url_for('static', filename='site.css') }}" rel="stylesheet">
+    {% endblock %}
+</head>
+<body>
+
 {% block content %}
-<div class="container">
-    {% block page_content %}{% endblock %}
+{% block navbar %}{% endblock%}
+<style>
+    .html, .body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100%;
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .container2 {
+        flex: 1;
+        padding: 20px;  /* Voit säätää tämän tarpeen mukaan */
+        box-sizing: border-box;
+    }
+</style>
+<div class="container2">
+{% block page_content %}{% endblock %}
 </div>
+{% block footer %} {% endblock %}
 {% endblock %}
+<script src="{{ url_for('static', filename='navbar.js') }}"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+<script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>
+</body>
+</html>

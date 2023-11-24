@@ -1,32 +1,37 @@
 {% extends "base_auth.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% block title %}Flasky{% endblock %}
-{% block content %}
-<div class="page-header">
-    <h1>Käyttäjähallinta</h1>
-</div>
+
+
+{% block page_content %}
+<div class="page-header"><h1>Käyttäjähallinta</h1></div>
+<div class="col-md-8" id="allUsers">
 <form method="POST" action="">
     {{ form.csrf_token }}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nimi</th>
-                <th>Email</th>
-                <th>Tila</th>
-                <th>Rooli</th>
-            </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-              <td>{{ user.username }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ form[user.id].is_active() if user.id in form else '' }}</td>
-              <td>{{ form[user.id].role.label if user.id in form else '' }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>          
-    </table>
     <button type="submit" class="btn btn-primary">Päivitä</button>
+    {% for user in users %}
+    <div class="row"><label for="fname">{{ user.username }}</label><br></div>
+    <div class="row row-cols-auto">
+        <div class="col-xs-6">
+            <input type="text" id="fname" name="fname" placeholder="{{ user.email }}"><br>
+        </div>
+        <div class="col-xs-3">
+            <select id="rooli" name="rooli">
+                <option value="user" {% if user.role == 1 %}selected{% endif %}>User</option>
+                <option value="moderator" {% if user.role == 9 %}selected{% endif %}>Moderator</option>
+                <option value="admin" {% if user.role == 16 %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+        <div class="col-xs-3">
+            <label for="aktiivinen">Tila</label>
+            <input type="checkbox" id="aktiivinen" name="aktiivinen" {% if user.is_active %}checked{% endif %}>
+        </div>
+    </div>
+    {% endfor %}
+
+
+    
 </form>
+</div> <!-- /container -->
+
 {% endblock %}
+

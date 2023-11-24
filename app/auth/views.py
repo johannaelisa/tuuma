@@ -14,9 +14,9 @@ from ..decorators import admin_required
 @login_required
 def home():
     current_app.logger.info('home-reitille tultiin')
-    if current_user.role == 1:
+    if current_user.role == 16:
         return render_template('admin/dashboard.html')
-    return render_template('auth/home.html')
+    return render_template('user/home.html')
 
 
 @auth.route('/dashboard', methods=['GET', 'POST'])
@@ -42,9 +42,8 @@ def editusers():
                 flash('Käyttäjätiedot päivitetty.')
             else:
                 flash('Lomakkeen validointi epäonnistui.', 'error')
-                print(f'Virheet käyttäjälle {user.id}: {user_form.errors}')
+                flash(f'Virheet käyttäjälle {user.id}: {user_form.errors}', 'error')
 
         return redirect(url_for('auth.editusers'))
 
     return render_template('admin/editusers.html', form=form, users=users)
-

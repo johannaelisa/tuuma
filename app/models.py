@@ -7,6 +7,7 @@ from flask_login import UserMixin
 from itsdangerous import URLSafeSerializer as Serializer
 from flask_sqlalchemy import SQLAlchemy
 import pytz
+from sqlalchemy.dialects.postgresql import JSON
 
 class Users(db.Model, UserMixin):
     __tablename__ = 'users'
