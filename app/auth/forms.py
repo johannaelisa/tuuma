@@ -13,8 +13,6 @@ class UserEditForm(FlaskForm):
     submit = SubmitField('Päivitä')
 
 class NewQuestionFormA(FlaskForm):
-    print("Current user:")
-    print(current_user)
     country = HiddenField('Country', default=current_user.country if current_user else "")
     type_id = HiddenField('type_ID', default=1)
     question = StringField('Kysymys')

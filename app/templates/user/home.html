@@ -1,110 +1,42 @@
-{% extends "base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base_auth.html" %}
 {% block head %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
 {% endblock %}
 
-{% block navbar %}
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-<script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-<nav class="navbar bg-body-tertiary fixed-top">
-    </style>
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">TUUMA</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-          <span class="fa-solid fa-bars fa-2xl"></span>
-        </button>
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Teemat</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-          </div>
-          <div class="offcanvas-body">
-            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Avaruus ja aika</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Luonnontieteet</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Ihmiselämä</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Ihmiset ja yhteiskunta</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Filosofia ja uskonto</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Politiikka ja oikeus</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Tulevaisuudentutkimus</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Liiketoiminta ja talous</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Teknologia</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Ympäristö</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Taide ja viihde</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Urheilu ja vapaa-aika</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Omin käsin</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </nav>
-{% endblock %}
 {% block content %}
-
 <div class="container-base">
     {% block page_content %}
-    <div class="page-header">
-        <h1>Feed!</h1>
-        <p class="lead">Tässä näkyy kaikki uusimmat tapahtumat.</p>
-    </div>
+    <div class="col-md-8">
     {% for card in cards %}
     <div class="card">
-      <h5 class="card-header">{{ category_mapping[card.primary_category] }}</h5>
+      <h6 class="card-header">{{ category_mapping[card.primary_category] }}</h6>
       <div class="card-body">
-        <h5 class="card-title">{{ card.question }}</h5>
-        <p class="card-text">Any additional information goes here.</p>
-        <a href="#" class="btn btn-primary">Go somewhere</a>
-      </div>
-    </div>
+        <h5 class="card-title">
+          <a href="{{ url_for('auth.card', id=card.id) }}">
+            {{ card.question }}
+          </a>
+        </h5>
+      </div><!-- card-body -->
+    </div><!-- card -->
     {% endfor %}
+  </div><!-- col-md-8 -->
     {% endblock %}
+</div>
 
-    {% block footer %}
-    <script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>    
-    <nav class="navbar fixed-bottom">
-        <div class="container-fluid">
-          <a class="fa-solid fa-house fa-xl" href="{{ url_for('auth.home') }}" style="color: #9DA0BE;"></a>
-          <a class="fa-solid fa-square-plus fa-xl" href="{{ url_for('auth.newcard') }}" style="color: #000000;"></a>
-          <a class="fa-solid fa-bell fa-xl" href="#" style="color: #000000;"></a>
-          <a class="fa-solid fa-user fa-xl" href="#" style="color: #000000;"></a>
-    </nav>
-    {% endblock %}
+{% block footer %}
+<script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>    
+<nav class="navbar fixed-bottom" id="fixed-bottom">
+    <div class="container-fluid">
+      <a class="fa-solid fa-house fa-lg" href="{{ url_for('auth.home') }}" style="color: #52567A;"></a>
+      <a class="fa-solid fa-square-plus fa-lg" href="{{ url_for('auth.newcard') }}" style="color: #000000;"></a>
+      <a class="fa-solid fa-bell fa-lg" href="#" style="color: #000000;"></a>
+      <a class="fa-solid fa-user fa-lg" href="#" style="color: #000000;"></a>
+    </div>
+</nav>
+{% endblock %}
 {% endblock %}
 
 

@@ -16,13 +16,14 @@ body {
     height: 100vh !important;
     padding: 20px;
     padding-top: 80px;
-    background-color: #A8B1AC !important;
+    background-color: #E5E5E5 !important;
 }
+
 .container-base .col-md-8 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 100%
+    max-width: 100%;
 }
 
 .container-base .col-md-8 img{
@@ -35,6 +36,8 @@ body {
 .navbar a {
     text-decoration: none;
 }
+
+
 
 @media (max-width: 767px) {
 }

@@ -1,0 +1,43 @@
+{% extends "base_auth.html" %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-base">
+{% block page_content %}
+<div class="col-md-8">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ card.question }}</h5>
+        </div>
+      </div>
+      <div class="row">
+        <div class="button-container">
+            <button type="button" class="btn btn-light">Ei</button>
+            <button type="button" class="btn btn-light">Jaa</button>
+        </div>
+    </div>
+  </div>
+{% endblock %}
+</div>
+
+{% block footer %}
+<script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>    
+<nav class="navbar fixed-bottom" id="fixed-bottom">
+    <div class="container-fluid">
+        <a class="fa-solid fa-house fa-lg" href="{{ url_for('auth.home') }}" style="color: #9DA0BE;"></a>
+        <a class="fa-solid fa-square-plus fa-lg" href="{{ url_for('auth.newcard') }}" style="color: #000000;"></a>
+        <a class="fa-solid fa-bell fa-lg" href="#" style="color: #000000;"></a>
+        <a class="fa-solid fa-user fa-lg" href="#" style="color: #000000;"></a>
+    </div>
+</nav>
+{% endblock %}
+{% endblock %}
+
+
+
+

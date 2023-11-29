@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import render_template, session, redirect, url_for, current_app, flash
+from flask import render_template, session, redirect, url_for, current_app, flash, request
 from flask_login import logout_user, login_required, current_user
 from ..auth import auth
 from .forms import UserEditForm, NewQuestionFormA
@@ -25,11 +25,10 @@ category_mapping = {
 
 @auth.route('/home', methods=['GET', 'POST'])
 @login_required
-@user_required
 def home():
     current_app.logger.info('home-reitille tultiin')
     if current_user.role == 16:
-        return render_template('admin/dashboard.html')
+        return redirect(url_for('auth.editusers'))
     cards = Cards.query.filter_by(country='Finland', type_id=1, is_parent=True).all()
     if cards:
         current_app.logger.info('Kysymyksiä löytyi')
@@ -89,26 +88,33 @@ def admin_dashboard():
 @login_required
 @admin_required
 def editusers():
+    form = UserEditForm() 
     users = Users.query.all()
-    form = UserEditForm()
+    current_app.logger.info('Editoidaan käyttäjiä')
 
-    if form.validate_on_submit():
+    if request.method == 'POST':
         for user in users:
             user_form = UserEditForm(obj=user)
             if user_form.validate_on_submit():
                 user_form.populate_obj(user)
                 db.session.commit()
-                flash('Käyttäjätiedot päivitetty.')
+                flash(f'Käyttäjätiedot päivitetty käyttäjälle {user.id}.')
             else:
-                flash('Lomakkeen validointi epäonnistui.', 'error')
                 flash(f'Virheet käyttäjälle {user.id}: {user_form.errors}', 'error')
 
-        return redirect(url_for('auth.editusers'))
+        return redirect(url_for('auth.editusers', form=form, users=users))  
 
     return render_template('admin/editusers.html', form=form, users=users)
+
 
 @auth.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('main.login'))
+
+@auth.route('/card/<int:id>', methods=['GET', 'POST'])
+@login_required
+def card(id):
+    card = Cards.query.get_or_404(id)
+    return render_template('user/card.html', card=card)

@@ -1,87 +1,108 @@
 .container-fluid {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100vw !important;
-        }
-        .navbar {
-            margin: 0px !important;
-            padding: 0px 10px 0px 20px !important;
-            max-width: 100vw !important;
-            height: 50px !important;
-            background-color: #E5E5E5 !important;
-        }
-        /* TUUMA-nimi */
-        .navbar-brand {
-            position: fixed;
-            top: 10px !important;
-            left: 20px !important;
-            width: 100px;
-            color: black !important;
-            font-size: 20px !important;
-            font-family: 'Roboto', sans-serif !important;
-        }
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+}
+.navbar {
+    margin: 0px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    max-width: 100vw !important;
+    height: 50px !important;
+    background-color: #E5E5E5 !important;
+}
+/* TUUMA-nimi */
+.navbar-brand {
+    position: fixed;
+    top: 10px !important;
+    left: 20px !important;
+    width: 100px;
+    color: black !important;
+    font-size: 20px !important;
+    font-family: 'Roboto', sans-serif !important;
+}
 
-        .navbar-login {
-            margin: 0px !important;
-            padding: 0px !important;
-            position: fixed;
-            top: 15px !important;
-            right: 20px !important;
-            color: black !important;
-            font-size: 15px !important;
-            font-family: 'Roboto', sans-serif !important;
-        }
+.navbar-login {
+    margin: 0px !important;
+    padding: 0px !important;
+    position: fixed;
+    top: 15px !important;
+    right: 20px !important;
+    color: black !important;
+    font-size: 15px !important;
+    font-family: 'Roboto', sans-serif !important;
+}
 
-        /* ? */
-        .navbar-toggler {
-            position: fixed;
-            top: 15px !important;
-            right: 30px !important;
-            margin: 0px !important;
-            padding: 0px !important;
-            background-color: lightorange !important;
-            font-family: 'Roboto', sans-serif !important;
-        }
-        .offcanvas {
-            margin: 0px !important;
-            padding: 0px !important;
-            padding-left: 30px !important;
-            min-width: 30vw !important;
-            max-width: 100vw !important;
-        }
+/* ? */
+.navbar-toggler {
+    position: fixed;
+    top: 15px !important;
+    right: 30px !important;
+    margin: 0px !important;
+    padding: 0px !important;
+    background-color: lightorange !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+.offcanvas {
+    margin: 0px !important;
+    padding: 0px !important;
+    padding-left: 30px !important;
+    min-width: 30vw !important;
+    max-width: 100vw !important;
+}
 
-        /* ? */
-        .offcanvas-header {
-            margin: 0px !important;
-            padding: 0px 10px 0px 10px !important;
-            width: 100vw !important;
-            height: 100px !important;
-            z-index: 2;
-            background-color: lightpink !important;
-        }
-        /* ? */
-        .offcanvas-body {
-            margin: 0px !important;
-            padding: 0px !important;
-            padding-left: 30px !important;
-            min-width: 30vw !important;
-            max-width: 100vw !important;
-            background-color: lightblue !important;
-        }
-        /* ? */
-        .offcanvas-end {
-            margin: 0px !important;
-            padding: 0px !important;
-            width: 100vw !important;
-        }
-        
-        /* ? */
-        .navbar-nav {
-            padding: 0px !important;
-            width: 100vw !important;
-            color: red !important;
-        }
-        .navbar-toggler-icon {
-            padding: 0px !important;
-            width: 200px !important;
-        }  
+/* ? */
+.offcanvas-header {
+    margin: 0px !important;
+    padding: 0px 10px 0px 10px !important;
+    width: 100vw !important;
+    height: 100px !important;
+    z-index: 2;
+    background-color: #E5E5E5 !important;
+}
+/* ? */
+.offcanvas-body {
+    margin: 0px !important;
+    padding: 0px !important;
+    padding-left: 30px !important;
+    min-width: 30vw !important;
+    max-width: 100vw !important;
+    background-color: #E5D99D !important;
+}
+/* ? */
+.offcanvas-end {
+    margin: 0px !important;
+    padding: 0px !important;
+    width: 100vw !important;
+}
+
+/* ? */
+.navbar-nav {
+    padding: 0px !important;
+    width: 100vw !important;
+}
+.navbar-toggler-icon {
+    padding: 0px !important;
+    width: 200px !important;
+} 
+
+.navbar .fixed-bottom .container-fluid {
+    margin: 30px !important;
+}
+
+@media (max-width: 767px) {
+}
+
+@media (min-width: 768px) {
+    #fixed-bottom {
+        padding-left: 20% !important;
+        padding-right: 20% !important;
+    }
+} 
+ 
+
+@media (min-width: 992px) {
+} 
+
+@media (min-width: 1200px) {  
+} 
