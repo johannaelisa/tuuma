@@ -15,29 +15,23 @@ from ..main import main
 @main.route('/', methods=['GET'])
 def root():
     if current_user.is_authenticated:
-        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
         return check_user_and_redirect(current_user)
     return redirect(url_for('main.index'))
 
 
 @main.route('/index', methods=['GET'])
 def index():
-    current_app.logger.info('Sovellus avattu pääsivulle.')
     if current_user.is_authenticated:
-        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
         return check_user_and_redirect(current_user)
     return render_template('index.html')
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
-    current_app.logger.info('Login-sivu avattu.')
     form = LoginForm()
     if current_user.is_authenticated:
-        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
         return check_user_and_redirect(current_user)
     
     if form.validate_on_submit():
-        current_app.logger.info('Tarkistetaan lomakkeen tiedot')
         form.email.data = form.email.data.strip()
         form.password.data = form.password.data.strip()
         form.remember_me.data = form.remember_me.data
@@ -47,12 +41,8 @@ def login():
         
         if user and user.check_password(form.password.data) and check_is_active(user):
             if form.remember_me.data:
-                current_app.logger.info('Remember me -valinta on päällä.')
-                remember_me = remember_me_token(user, db)
-                current_app.logger.info('Remember me -token luotu.')
-                current_app.logger.info('Remember me -token: ' + str(remember_me))       
+                remember_me = remember_me_token(user, db)  
             login_user(user, remember=remember_me, duration=None, force=False, fresh=True)
-            current_app.logger.info('Käyttäjä on kirjautunut sisään.')
             return redirect(url_for('auth.home'))
         else:
             flash('Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.')
@@ -62,27 +52,21 @@ def login():
 @main.route('/logout', methods=['GET'])
 @login_required
 def logout():
-    current_app.logger.info('Käyttäjä on kirjautunut ulos.')
     remember_me_token = RememberMeTokens.query.filter_by(user_id=current_user.id).first()
     logout_user()
     if remember_me_token:
         db.session.delete(remember_me_token)
         db.session.commit()
-        current_app.logger.info('Remember me -token poistettu.')
     return redirect(url_for('main.index'))
 
 @main.route('/newpassword', methods=['GET', 'POST'])
 def newpassword():
-    current_app.logger.info('Uuden salasanan vaihtosivu avattu.')
     form = PasswordResetForm()
     if current_user.is_authenticated:
-        current_app.logger.info('Käyttäjä on jo kirjautunut sisään.')
         return check_user_and_redirect(current_user)
     if form.validate_on_submit():
         user = Users.query.filter_by(email=form.email.data).first()
         if user:
-            current_app.logger.info('Käyttäjä löytyi.')
-            #Tarkistetaan, onko käyttäjätili vahvistettu rekisteröitymisen jälkeen
             if not user.confirmed:
                 current_app.logger.info('Käyttäjätiliä ei ole vahvistettu.')
                 flash('Käyttäjätiliä ei ole vahvistettu. Tarkista sähköpostisi.')

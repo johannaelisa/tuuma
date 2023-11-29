@@ -8,6 +8,7 @@ from itsdangerous import URLSafeSerializer as Serializer
 from flask_sqlalchemy import SQLAlchemy
 import pytz
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import Enum
 
 class Users(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -32,7 +33,7 @@ class Users(db.Model, UserMixin):
     member_since = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"User('{self.username}', '{self.role}', '{self.is_active}')"
+        return f"User('{self.username}', '{self.role}', '{self.id}', '{self.country}', '{self.is_active}')"
     
     def generate_confirmation_token(self):
             s = Serializer(current_app.config['SECRET_KEY'], salt='some_salt_value')
@@ -66,24 +67,6 @@ class RememberMeTokens(db.Model):
     def __repr__(self):
         return f"RememberMeToken('{self.id}', '{self.token}, '{self.expiration_time}')"
 
-class Cards(db.Model):
-    __tablename__ = 'cards'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    country_id = db.Column(db.Integer, nullable=False)
-    type_id = db.Column(db.Integer, nullable=False)
-    card_class = db.Column(db.String(20), nullable=False)
-    value = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(20), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    is_parent = db.Column(db.Boolean, default=False)
-    parent_id = db.Column(db.Integer, nullable=True)
-    children = db.Column(db.Integer, default=0)
-    
-    def __repr__(self):
-        return f"Card('{self.id}', '{self.value}, '{self.status}, '{self.children}')"
-
 class PasswordResetTokens(db.Model):
     __tablename__ = 'password_reset_tokens'
 
@@ -94,3 +77,35 @@ class PasswordResetTokens(db.Model):
 
     def __repr__(self):
         return f"PasswordResetToken('{self.id}', '{self.token}', '{self.expiration_time}')"
+
+class Cards(db.Model):
+    __tablename__ = 'cards'
+
+    id = db.Column(db.Integer, primary_key=True)
+    country = db.Column(db.String(120), db.ForeignKey('users.country'), nullable=False)
+    type_id = db.Column(db.Integer, nullable=False)
+    primary_category = db.Column(Enum(
+        "aikajaavaruus",
+        "luonnontieteet",
+        "Ihmiselämä",
+        "ihmisetjayhteiskunta",
+        "filosofiajauskonto",
+        "politiikkajaoikeus",
+        "tulevaisuudentutkimus",
+        "liiketoimintajatalous",
+        "teknologia",
+        "ymparisto",
+        "taidejaviihde",
+        "urheilujavapaa-aika",
+        name="primary_category"
+    ), nullable=False)
+    question = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="False")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    is_parent = db.Column(db.Boolean, default=False)
+    parent_id = db.Column(db.Integer, nullable=True)
+    children = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f"Card('{self.id}', '{self.value}, '{self.status}, '{self.children}')"
