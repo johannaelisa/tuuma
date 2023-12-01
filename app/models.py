@@ -107,5 +107,21 @@ class Cards(db.Model):
     parent_id = db.Column(db.Integer, nullable=True)
     children = db.Column(db.Integer, default=0)
     
+    def serialize(self):
+        return {
+            'id': self.id,
+            'country': self.country,
+            'type_id': self.type_id,
+            'primary_category': self.primary_category,
+            'question': self.question,
+            'status': self.status,
+            'created_at': self.created_at.isoformat(),
+            'user_id': self.user_id,
+            'is_parent': self.is_parent,
+            'parent_id': self.parent_id,
+            'children': self.children
+        }
+    
     def __repr__(self):
-        return f"Card('{self.id}', '{self.value}, '{self.status}, '{self.children}')"
+        return f"Card('{self.id}', '{self.country}', '{self.type_id}', '{self.primary_category}', '{self.question}', '{self.status}', '{self.created_at}', '{self.is_parent}', '{self.children}')"
+

@@ -36,3 +36,24 @@ class NewQuestionFormA(FlaskForm):
     parent_id = HiddenField('Parent ID', default=0)
     children = HiddenField('Children', default=0)
     submit = SubmitField('Lähetä')
+    
+class EditMyProfileForm(FlaskForm):
+    id = HiddenField('ID', default=current_user.id if current_user and current_user.is_authenticated else "")
+    username = StringField('Nimi', validators=[DataRequired()])
+    firstname = StringField('Etunimi', validators=[DataRequired()])
+    lastname = StringField('Sukunimi', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    phone = StringField('Puhelinnumero', validators=[DataRequired()])
+    country = SelectField('Maa', choices=[
+        ("Finland", "Suomi"),
+        ("Sweden", "Ruotsi"),
+        ("Norway", "Norja"),
+        ("Denmark", "Tanska"),
+        ("Iceland", "Islanti"),
+        ("Lithuania", "Liettua"),
+        ("Latvia", "Latvia"),
+        ("Estonia", "Viro")
+    ], validators=[DataRequired()])
+    submit = SubmitField('Päivitä')
+    
+        

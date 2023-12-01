@@ -8,22 +8,18 @@
 
 {% block content %}
 <div class="container-base">
-    {% block page_content %}
-    <div class="col-md-8">
-    {% for card in cards %}
-    <div class="card">
-      <h6 class="card-header">{{ category_mapping[card.primary_category] }}</h6>
-      <div class="card-body">
-        <h5 class="card-title">
-          <a href="{{ url_for('auth.card', id=card.id) }}">
-            {{ card.question }}
-          </a>
-        </h5>
-      </div><!-- card-body -->
-    </div><!-- card -->
+  <div class="col-md-8">
+  <div class="col-md-4">
+  <select id="category-filter" class="form-select">
+    <option value="kaikki">Kaikki aiheet</option>
+    {% for category_key, category_value in category_mapping.items() %}
+        <option value="{{ category_key }}">{{ category_value }}</option>
     {% endfor %}
-  </div><!-- col-md-8 -->
-    {% endblock %}
+  </select>
+  </div>  
+  <div id="card-container">
+    <!-- Kortit tulostetaan tähän -->
+  </div>
 </div>
 
 {% block footer %}
@@ -37,8 +33,82 @@
     </div>
 </nav>
 {% endblock %}
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+category_mapping = {
+  "kaikki": "Kaikki",
+  "aikajaavaruus": "Aika ja avaruus",
+  "luonnontieteet": "Luonnontieteet",
+  "Ihmiselämä": "Ihmiselämä",
+  "ihmisetjayhteiskunta": "Ihmiset ja yhteiskunta",
+  "filosofiajauskonto": "Filosofia ja uskonto",
+  "politiikkajaoikeus": "Politiikka ja oikeus",
+  "tulevaisuudentutkimus": "Tulevaisuudentutkimus",
+  "liiketoimintajatalous": "Liiketoiminta ja talous",
+  "teknologia": "Teknologia",
+  "ymparisto": "Ympäristö",
+  "taidejaviihde": "Taide ja viihde",
+  "urheilujavapaa-aika": "Urheilu ja vapaa-aika",
+};
+var categoryFilter = "";
+$(document).ready(function() {
+  function loadContent(category) {
+    console.log("Lähetetään AJAX-pyyntö: ", { primary_category: category });
+    var ajaxData = {};
+    if (category !== "kaikki" && category !== "") {
+        ajaxData.primary_category = category;
+    }
+    $.ajax({
+      url: "{{ url_for('auth.home') }}",
+      data: ajaxData,
+      method: "GET",
+      dataType: "json",
+      contentType: 'application/json', 
+      success: function(data) {
+        console.log("Received data:", data);
+        var cardsContainer = $("#card-container");
+        cardsContainer.empty();
+
+        if (data && Array.isArray(data.cards)) {
+          data.cards.forEach(function(card) {
+            var cardHtml = `<div class='card'>
+                <h6 class='card-header'>${category_mapping[card.primary_category]}</h6>
+                <div class='card-body'>
+                    <h5 class='card-title'>
+                        <a href='#' data-id='${card.id}'>${card.question}</a>
+                    </h5>
+                </div>
+            </div>`;
+            cardsContainer.append(cardHtml);
+        });
+      } else {
+        console.error("Data or data.cards is undefined or not an array.");
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error("Virhe AJAX-pyynnössä:", error);
+    }
+  });
+}
+
+  loadContent(categoryFilter || "");
+
+  $("#category-filter").change(function() {
+      var categoryFilter = $("#category-filter").val();
+      console.log("Category filter changed:", categoryFilter);
+      loadContent(categoryFilter);
+});
+  $(document).on('click', '.card-title a', function() {
+    var cardId = $(this).data('id');
+    var cardUrl = "/card/" + cardId; 
+    console.log("Klikattu korttia, siirrytään osoitteeseen:", cardUrl);
+    window.location.href = cardUrl;
+  });
+
+});
+</script>
 {% endblock %}
-
-
-
 

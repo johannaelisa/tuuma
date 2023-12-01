@@ -7,6 +7,7 @@ from config import config
 from flask_login import LoginManager
 import logging
 from flask_bcrypt import Bcrypt
+from flask_cors import CORS
 
 bootstrap = Bootstrap()
 mail = Mail()
@@ -22,8 +23,10 @@ def load_user(user_id):
 
 def create_app(config_name):
     app = Flask(__name__)
+    app.config['JSONIFY_MIMETYPE'] = 'application/json'
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+    CORS(app)
     
     app.config['TIMEZONE'] = 'Europe/Helsinki'
     
@@ -47,7 +50,7 @@ def create_app(config_name):
     
     log_file = 'sovellusloki.log'
     logging.basicConfig(filename=log_file, level=logging.INFO)
-
+    
     return app
 
 from .main import views

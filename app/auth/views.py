@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta
-from flask import render_template, session, redirect, url_for, current_app, flash, request
+from flask import render_template, session, redirect, url_for, current_app, flash, request, jsonify, make_response
 from flask_login import logout_user, login_required, current_user
 from ..auth import auth
-from .forms import UserEditForm, NewQuestionFormA
+from .forms import UserEditForm, NewQuestionFormA, EditMyProfileForm
 from .. import db
 from ..models import Users, Cards
 from ..decorators import admin_required, user_required
 
 
 category_mapping = {
+    "kaikki": "Kaikki",
     "aikajaavaruus": "Aika ja avaruus",
     "luonnontieteet": "Luonnontieteet",
     "Ihmiselämä": "Ihmiselämä",
@@ -29,14 +30,33 @@ def home():
     current_app.logger.info('home-reitille tultiin')
     if current_user.role == 16:
         return redirect(url_for('auth.editusers'))
-    cards = Cards.query.filter_by(country='Finland', type_id=1, is_parent=True).all()
-    if cards:
-        current_app.logger.info('Kysymyksiä löytyi')
-        for card in cards:
-            current_app.logger.info('Kysymys: ' + card.question)
-        return render_template('user/home.html', cards=cards, category_mapping=category_mapping)
-    return render_template('user/home.html')
+    
+    category_filter = request.values.get('primary_category')
+    query = Cards.query.filter_by(country='Finland', type_id=1, is_parent=True)
+    
+    if category_filter and category_filter.lower() != 'kaikki':
+        query = query.filter_by(primary_category=category_filter)
 
+    query = query.order_by(Cards.created_at.desc())
+    cards = query.all()
+    
+    try:
+        if request.is_json:
+            current_app.logger.info(f'2. category_filter: {category_filter}')
+            return jsonify(cards=[card.serialize() for card in cards])
+        else:
+            return render_template('user/home.html', cards=cards, category_mapping=category_mapping, category_filter=category_filter)
+    except Exception as e:
+        current_app.logger.error(f'Virhe reitillä /home: {str(e)}')
+        if request.is_json:
+            response = make_response(jsonify(error=str(e)), 500)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            flash('Jotain meni pieleen!', 'error')
+            return render_template('user/home.html', category_mapping=category_mapping, category_filter=category_filter)
+        
+        
 @auth.route('/newcard', methods=['GET', 'POST'])
 @login_required
 @user_required
@@ -118,3 +138,22 @@ def logout():
 def card(id):
     card = Cards.query.get_or_404(id)
     return render_template('user/card.html', card=card)
+
+@auth.route('/profile/<int:id>', methods=['GET', 'POST'])
+@login_required
+@user_required
+def profile(id):
+    form = EditMyProfileForm()
+    user = Users.query.get_or_404(id)
+    if form.validate_on_submit():
+        current_app.logger.info('Tarkistetaan lomakkeen tiedot')
+        user.username = form.username.data
+        user.firstname = form.firstname.data
+        user.lastname = form.lastname.data
+        user.email = form.email.data
+        user.phone = form.phone.data
+        user.country = form.country.data
+        db.session.commit()
+        flash('Profiilisi päivitetty onnistuneesti!', 'success')
+        return redirect(url_for('auth.profile', id=id))
+    return render_template('user/profile.html', user=user, form=form)
