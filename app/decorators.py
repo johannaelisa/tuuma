@@ -13,7 +13,7 @@ def admin_required(f):
 def moderator_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.role not in ('moderator'):
+        if current_user.role != 8:
             abort(403)
         return f(*args, **kwargs)
     return decorated_function

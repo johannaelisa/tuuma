@@ -10,7 +10,7 @@
 <div class="container-base">
 {% block page_content %}
 <div class="col-md-8">
-  <div class="col-lg-8">
+  <div class="col-lg-8" id="form">
     <h1>Aloita uusi keskustelu</h1>
     <p class="lead">Huom! Tarkista olemassa olevat ketjut.</p>
     {{ wtf.quick_form(form, button_map={'submit': 'primary'}) }}
@@ -25,9 +25,9 @@
 <nav class="navbar fixed-bottom" id="fixed-bottom">
   <div class="container-fluid">
     <a class="fa-solid fa-house fa-lg" href="{{ url_for('auth.home') }}" style="color: #000000;"></a>
-    <a class="fa-solid fa-square-plus fa-lg" href="{{ url_for('auth.newcard') }}" style="color: #9DA0BE;"></a>
+    <a class="fa-solid fa-square-plus fa-lg" href="{{ url_for('auth.newcard') }}" style="color: #6B6BEF;"></a>
     <a class="fa-solid fa-bell fa-lg" href="#" style="color: #000000;"></a>
-    <a class="fa-solid fa-user fa-lg" href="#" style="color: #000000;"></a>
+    <a class="fa-solid fa-user fa-lg" href="{{ url_for('auth.profile', id=current_user.id) }}" style="color: #000000;"></a>
   </div>
 </nav>
 {% endblock %}

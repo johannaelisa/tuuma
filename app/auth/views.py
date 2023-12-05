@@ -5,7 +5,7 @@ from ..auth import auth
 from .forms import UserEditForm, NewQuestionFormA, EditMyProfileForm
 from .. import db
 from ..models import Users, Cards
-from ..decorators import admin_required, user_required
+from ..decorators import admin_required, user_required, moderator_required
 
 
 category_mapping = {
@@ -30,6 +30,8 @@ def home():
     current_app.logger.info('home-reitille tultiin')
     if current_user.role == 16:
         return redirect(url_for('auth.editusers'))
+    if current_user.role == 8:
+        return redirect(url_for('auth.forreview'))
     
     category_filter = request.values.get('primary_category')
     query = Cards.query.filter_by(country='Finland', type_id=1, is_parent=True)
@@ -118,13 +120,16 @@ def editusers():
             if user_form.validate_on_submit():
                 user_form.populate_obj(user)
                 db.session.commit()
+                current_app.logger.info(f'Käyttäjätiedot päivitetty käyttäjälle {user.id}.')
                 flash(f'Käyttäjätiedot päivitetty käyttäjälle {user.id}.')
             else:
+                current_app.logger.error(f'Virheet käyttäjälle {user.id}: {user_form.errors}')
                 flash(f'Virheet käyttäjälle {user.id}: {user_form.errors}', 'error')
 
         return redirect(url_for('auth.editusers', form=form, users=users))  
 
     return render_template('admin/editusers.html', form=form, users=users)
+
 
 
 @auth.route('/logout', methods=['GET', 'POST'])
@@ -143,6 +148,35 @@ def card(id):
 @login_required
 @user_required
 def profile(id):
+    current_app.logger.info('profiili-reitille tultiin')
+    if current_user.role == 16:
+        return redirect(url_for('auth.editusers'))
+    
+    query = Cards.query.filter_by(user_id=id)
+
+    query = query.order_by(Cards.created_at.desc())
+    cards = query.all()
+    
+    try:
+        if request.is_json:
+            return jsonify(cards=[card.serialize() for card in cards])
+        else:
+            return render_template('user/profile.html', cards=cards)
+    except Exception as e:
+        current_app.logger.error(f'Virhe reitillä /profile: {str(e)}')
+        if request.is_json:
+            response = make_response(jsonify(error=str(e)), 500)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            flash('Jotain meni pieleen!', 'error')
+            return render_template('user/profile.html')
+
+
+@auth.route('/profile/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@user_required
+def editprofile(id):
     form = EditMyProfileForm()
     user = Users.query.get_or_404(id)
     if form.validate_on_submit():
@@ -157,3 +191,34 @@ def profile(id):
         flash('Profiilisi päivitetty onnistuneesti!', 'success')
         return redirect(url_for('auth.profile', id=id))
     return render_template('user/profile.html', user=user, form=form)
+
+@auth.route('/forreview', methods=['GET', 'POST'])
+@login_required
+@moderator_required
+def forreview():
+    current_app.logger.info('Moderaattorin reitille tultiin')
+    if current_user.role == 16:
+        return redirect(url_for('auth.editusers'))
+    if current_user.role == 1:
+        return redirect(url_for('auth.home'))
+    
+    query = Cards.query.filter_by(status="unpublished")
+
+    query = query.order_by(Cards.created_at.desc())
+    cards = query.all()
+    
+    try:
+        if request.is_json:
+            return jsonify(cards=[card.serialize() for card in cards])
+        else:
+            return render_template('moderator/forreview.html', cards=cards)
+    except Exception as e:
+        current_app.logger.error(f'Virhe reitillä /forreview: {str(e)}')
+        if request.is_json:
+            response = make_response(jsonify(error=str(e)), 500)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            flash('Jotain meni pieleen!', 'error')
+            return render_template('moderator/forreview.html')
+    

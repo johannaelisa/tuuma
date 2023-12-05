@@ -26,10 +26,11 @@
 <script src="https://kit.fontawesome.com/87283090d5.js" crossorigin="anonymous"></script>    
 <nav class="navbar fixed-bottom" id="fixed-bottom">
     <div class="container-fluid">
-      <a class="fa-solid fa-house fa-lg" href="{{ url_for('auth.home') }}" style="color: #52567A;"></a>
+      <a class="fa-solid fa-house fa-lg" href="{{ url_for('auth.home') }}" style="color: #6B6BEF;"></a>
       <a class="fa-solid fa-square-plus fa-lg" href="{{ url_for('auth.newcard') }}" style="color: #000000;"></a>
       <a class="fa-solid fa-bell fa-lg" href="#" style="color: #000000;"></a>
-      <a class="fa-solid fa-user fa-lg" href="#" style="color: #000000;"></a>
+      <a class="fa-solid fa-user fa-lg" href="{{ url_for('auth.profile', id=current_user.id) }}" style="color: #000000;"></a>
+
     </div>
 </nav>
 {% endblock %}

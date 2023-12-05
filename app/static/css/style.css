@@ -6,6 +6,7 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
+    background-color: #ccccb3 !important;
 }
 
 .container-base {
@@ -51,7 +52,10 @@ body {
     text-decoration: none;
 }
 
-
+#form .btn {
+    margin-top: 20px;
+    background-color: #6B6BEF;
+}
 
 @media (max-width: 767px) {
 }

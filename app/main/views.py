@@ -45,6 +45,7 @@ def login():
             login_user(user, remember=remember_me, duration=None, force=False, fresh=True)
             return redirect(url_for('auth.home'))
         else:
+            current_app.logger.info("Kirjautuminen epäonnistui.")
             flash('Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.')
             return redirect(url_for('main.login'))
     return render_template('auth/login.html', form=form)
@@ -72,6 +73,11 @@ def newpassword():
                 flash('Käyttäjätiliä ei ole vahvistettu. Tarkista sähköpostisi.')
                 confirmation_token(user, db)
                 return render_template('main/newpassword.html', form=form)
+            
+            # Väliaikainen käyttäjätilin aktivoiminen
+            user.is_active = True
+            db.session.commit()
+            
             new_password_token(user, db)            
             flash('Salasanan vaihtolinkki lähetetty sähköpostiisi.')
             return redirect(url_for('main.index'))

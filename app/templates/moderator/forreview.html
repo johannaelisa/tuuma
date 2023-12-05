@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-base">
   <div class="col-md-8">
-    <img class="col-md-12" src="{{ url_for('static', filename='linnut.webp') }}" alt="Kuva" style="border: 20px solid #FFFFFF;" >
+    <h5>Tarkistettavat julkaisut</h5>
   <div class="col-md-4">
   </div>  
   <div id="card-container">
@@ -71,6 +71,7 @@ $(document).ready(function() {
                     <h5 class='card-title'>
                         <a href='#' data-id='${card.id}'>${card.question}</a>
                     </h5>
+                    <button type="button" class="btn btn-dark btn-hyvaksy" data-id='${card.id}'>Hyväksy</button>
                 </div>
             </div>`;
             cardsContainer.append(cardHtml);
@@ -86,6 +87,26 @@ $(document).ready(function() {
 }
 
   loadContent();
+
+  $(document).on('click', '.btn-hyvaksy', function() {
+    var cardId = $(this).data('id');
+
+    // Tee AJAX-kutsu tietokannan päivittämiseksi
+    $.ajax({
+      url: '/hyvaksy-api', // Korvaa tämä oikealla API-reitillä
+      method: 'POST',
+      data: { id: cardId },
+      success: function(response) {
+        // Päivitä näkymä onnistuneen hyväksynnän jälkeen, jos tarpeen
+        console.log('Julkaisu hyväksytty!');
+        // Voit esimerkiksi poistaa kortin näkymästä
+        $(this).closest('.card').remove();
+      },
+      error: function(error) {
+        console.error('Virhe hyväksynnässä:', error);
+      }
+    });
+  });
 
   $(document).on('click', '.card-title a', function() {
     var cardId = $(this).data('id');
